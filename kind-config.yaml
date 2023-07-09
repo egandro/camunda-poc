@@ -1,0 +1,19 @@
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+
+containerdConfigPatches:
+- |-
+  [plugins."io.containerd.grpc.v1.cri".registry]
+    config_path = "/etc/containerd/certs.d"
+
+networking:
+  apiServerAddress: "127.0.0.1"
+  apiServerPort: 6443
+# nodes:
+# - role: control-plane
+#   extraPortMappings:
+#   - containerPort: 3301
+#     hostPort: 3301
+#     listenAddress: "0.0.0.0"
+#     protocol: TCP
+
