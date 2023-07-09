@@ -5,7 +5,7 @@ CI_REGISTRY_IMAGE=$(CI_REGISTRY)/$(CI_PROJECT_NAME)
 TAG=$(DIR_HASH)
 
 export KUBECONFIG=.kubeconfig
-export KIND_CLUSTER_NAME=signoz-test
+export KIND_CLUSTER_NAME=camunda-platform-local
 
 all:
 	@echo "all"
@@ -19,32 +19,48 @@ destroy-registry:
 create-cluster: create-registry
 	kind create cluster --config=./kind-config.yaml
 	./scripts/connectregistry.sh
-	kubectl cluster-info --context kind-signoz-test
+	kubectl cluster-info --context kind-$(KIND_CLUSTER_NAME)
+	docker update --cpus=8 -m 16g --memory-swap -1 $(KIND_CLUSTER_NAME)-control-plane $(KIND_CLUSTER_NAME)-control-plane
 
 destroy-cluster: destroy-registry
 	kind delete cluster
 
 helm-prepare:
-	helm repo add signoz https://charts.signoz.io
+	helm repo add camunda https://helm.camunda.io
 	helm repo update
 
-install-signoz: helm-prepare
-	kubectl create ns platform
-	helm --namespace platform install my-release signoz/signoz -f ./values.yaml
-	sleep 30
-	@echo waiting until frontend pod is ready... this is sometimes super unstable and needs to be fixed!
-	kubectl -n platform wait --for=condition=ready \
-      pod -l "app.kubernetes.io/component=frontend" --timeout=30m
+install-camunda: helm-prepare
+	kubectl create ns camunda
+	helm --namespace camunda install dev camunda/camunda-platform \
+    	-f ./camunda-platform-core-kind-values.yaml
 
-uninstall-signoz:
-	helm uninstall --namespace platform my-release
-	kubectl -n platform patch clickhouseinstallations.clickhouse.altinity.com/my-release-clickhouse -p '{"metadata":{"finalizers":[]}}' --type=merge
-	kubectl -n platform delete pvc -l app.kubernetes.io/instance=my-release
-	kubectl delete namespace platform
+# helm --namespace platform install my-release signoz/signoz -f ./values.yaml
+# sleep 30
+# @echo waiting until frontend pod is ready... this is sometimes super unstable and needs to be fixed!
+# kubectl -n platform wait --for=condition=ready \
+#   pod -l "app.kubernetes.io/component=frontend" --timeout=30m
 
-connect-web:
-	echo "Visit http://127.0.0.1:3301 to use your application"
-	kubectl --namespace platform port-forward `kubectl get pods --namespace platform -l "app.kubernetes.io/name=signoz,app.kubernetes.io/instance=my-release,app.kubernetes.io/component=frontend" -o jsonpath="{.items[0].metadata.name}"` 3301:3301
+uninstall-camunda:
+	helm uninstall --namespace camunda dev
+
+# kubectl -n platform patch clickhouseinstallations.clickhouse.altinity.com/my-release-clickhouse -p '{"metadata":{"finalizers":[]}}' --type=merge
+# kubectl -n platform delete pvc -l app.kubernetes.io/instance=my-release
+# kubectl delete namespace platform
+
+operate-forward:
+	echo "Visit http://127.0.0.1:8081 to use your application"
+	kubectl --namespace camunda port-forward svc/dev-operate  8081:80
+
+tasklist-forward:
+	echo "Visit http://127.0.0.1:8082 to use your application"
+	kubectl --namespace camunda port-forward svc/dev-tasklist  8082:80
+
+connectors-forward:
+	echo "Visit http://127.0.0.1:8088 to use your application"
+	kubectl --namespace camunda port-forward svc/dev-connectors 8088:8080
+
+zeebe-port:
+	kubectl --namespace camunda port-forward svc/dev-zeebe-gateway 26500:26500
 
 
 #
