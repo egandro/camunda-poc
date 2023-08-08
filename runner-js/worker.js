@@ -23,12 +23,16 @@ import open from 'open';
 //  - 'baseUrl': url to the Process Engine
 //  - 'logger': utility to automatically log important events
 //  - 'asyncResponseTimeout': long polling timeout (then a new request will be issued)
-const config = { baseUrl: 'http://localhost:8088/engine-rest', use: logger, asyncResponseTimeout: 10000 };
+const config = {
+  baseUrl: 'http://127.0.0.1:8088/engine-rest',
+  use: logger,
+  asyncResponseTimeout: 10000
+};
 
 // create a Client instance with custom configuration
 const client = new Client(config);
 
-// susbscribe to the topic: 'charge-card'
+// subscribe to the topic: 'charge-card'
 client.subscribe('charge-card', async function({ task, taskService }) {
   // Put your business logic here
 
