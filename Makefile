@@ -29,23 +29,25 @@ helm-prepare:
 	helm repo add camunda https://helm.camunda.io
 	helm repo update
 
+# helm show values camunda/camunda-platform > values.yaml
 install-camunda: helm-prepare
 	kubectl create ns camunda
 	helm --namespace camunda install dev camunda/camunda-platform \
-    	-f ./camunda-platform-core-kind-values.yaml
+		-f ./camunda-platform-core-kind-values.yaml
+	kubectl -n camunda wait --for=condition=ready \
+		pod -l "app=camunda-platform" --timeout=30m
+	kubectl -n camunda wait --for=condition=ready \
+		pod -l "app=elasticsearch-master" --timeout=30m
+	kubectl -n camunda wait --for=condition=ready \
+		pod -l "app.kubernetes.io/component=zeebe-gateway" --timeout=30m
 
-# helm --namespace platform install my-release signoz/signoz -f ./values.yaml
-# sleep 30
-# @echo waiting until frontend pod is ready... this is sometimes super unstable and needs to be fixed!
-# kubectl -n platform wait --for=condition=ready \
-#   pod -l "app.kubernetes.io/component=frontend" --timeout=30m
+logs:
+	kubectl --namespace camunda get events --field-selector type!=Normal
 
 uninstall-camunda:
-	helm uninstall --namespace camunda dev
-
-# kubectl -n platform patch clickhouseinstallations.clickhouse.altinity.com/my-release-clickhouse -p '{"metadata":{"finalizers":[]}}' --type=merge
-# kubectl -n platform delete pvc -l app.kubernetes.io/instance=my-release
-# kubectl delete namespace platform
+	helm --namespace camunda uninstall  dev
+	kubectl -n camunda delete pvc --all
+	kubectl delete ns camunda
 
 operate-forward:
 	echo "Visit http://127.0.0.1:8081 to use your application"
