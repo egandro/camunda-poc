@@ -19,3 +19,28 @@ curl -H "Content-Type: application/json" -X POST \
     http://localhost:26500/process-definition/key/payment-retrieval/start
 
 ```
+
+## CLI Client
+
+- <https://docs.camunda.io/docs/apis-tools/cli-client/>
+- <https://docs.camunda.io/docs/apis-tools/cli-client/cli-get-started/>
+
+```bash
+sudo npm i -g zbctl
+export ZEEBE_ADDRESS='http://localhost:26500'
+# things
+export ZEEBE_ADDRESS='[Zeebe API]'
+export ZEEBE_CLIENT_ID='[Client ID]'
+export ZEEBE_CLIENT_SECRET='[Client Secret]'
+export ZEEBE_AUTHORIZATION_SERVER_URL='[OAuth API]'
+```
+
+```bash
+export ZEEBE_ADDRESS='http://localhost:26500'
+zbctl status
+zbctl deploy resource foo.bpmn
+zbctl create worker test-worker --handler "echo {\"result\":\"Pong\"}"
+zbctl create instance camunda-cloud-quick-start-advanced
+zbctl create worker test-worker --handler "echo {\"result\":\"...\"}"
+#while true; do zbctl create instance camunda-cloud-quick-start-advanced; sleep 1; done
+```
