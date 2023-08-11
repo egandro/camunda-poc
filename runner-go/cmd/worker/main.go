@@ -56,7 +56,10 @@ func handleJob(client worker.JobClient, job entities.Job) {
 		return
 	}
 
-	log.Printf("variables %v\n", variables)
+	// log.Printf("variables %v\n", variables)
+	for key, value := range variables {
+		log.Printf("variable %v: %v\n", key, value)
+	}
 
 	request, err := client.NewCompleteJobCommand().JobKey(jobKey).VariablesFromMap(variables)
 	if err != nil {
