@@ -63,9 +63,15 @@ stop-forward:
 deploy-model:
 	zbctl --insecure deploy models/credit-card.bpmn
 
-start-worker:
+start-worker-js:
 	cd runner-js && npm install
 	node runner-js/worker.js
+
+build-go-worker:
+	$(MAKE) -C runner-go build
+
+start-worker-go: build-go-worker
+	./runner-go/worker
 
 create-instance:
 	zbctl --insecure create instance Process_CreditCard --variables '{ "foo": "bar", "whatever": true, "something": -17 }'
