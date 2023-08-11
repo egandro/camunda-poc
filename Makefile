@@ -9,7 +9,7 @@ create-cluster:
 	kind create cluster
 	kubectl cluster-info --context kind-$(KIND_CLUSTER_NAME)
 
-destroy-cluster: destroy-registry
+destroy-cluster:
 	kind delete cluster
 
 helm-prepare:
