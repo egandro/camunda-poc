@@ -75,3 +75,6 @@ start-worker-go: build-go-worker
 
 create-instance:
 	zbctl --insecure create instance Process_CreditCard --variables '{ "foo": "bar", "whatever": true, "something": -17 }'
+
+create-instance-go: build-go-worker
+	./runner-go/starter

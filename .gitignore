@@ -2,3 +2,5 @@
 /deploy/service*
 node_modules
 /values.yaml
+/runner-go/worker
+/runner-go/starter
