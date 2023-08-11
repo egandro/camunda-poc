@@ -10,12 +10,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "camunda-8-sdk": "^0.11.0",
-    "camunda-external-task-client-js": "3.0.0",
-    "zeebe-node": "^8.2.5"
-  },
-  "devDependencies": {
-    "open": "^7.0.2"
+    "camunda-8-sdk": "^0.11.0"
   },
   "type": "module"
 }

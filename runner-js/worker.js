@@ -1,49 +1,26 @@
-/*
- * Copyright Camunda Services GmbH and/or licensed to Camunda Services GmbH
- * under one or more contributor license agreements. See the NOTICE file
- * distributed with this work for additional information regarding copyright
- * ownership. Camunda licenses this file to you under the Apache License,
- * Version 2.0; you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+import * as zb from "zeebe-node";
+const { ZBClient } = zb;
 
-// const { Client, logger } = require('camunda-external-task-client-js');
-import { Client, logger } from 'camunda-external-task-client-js';
-import open from 'open';
+// configuration from env variables - none needed if using localhost
+const client = new ZBClient('http://localhost:26500');
 
-// configuration for the Client:
-//  - 'baseUrl': url to the Process Engine
-//  - 'logger': utility to automatically log important events
-//  - 'asyncResponseTimeout': long polling timeout (then a new request will be issued)
-const config = {
-  baseUrl: 'http://127.0.0.1:8088/engine-rest',
-  use: logger,
-  asyncResponseTimeout: 10000
-};
+client.createWorker({
+  taskType: "charge-card",
+  taskHandler: async (job) => {
+    // Put your business logic here
 
-// create a Client instance with custom configuration
-const client = new Client(config);
+    // Get a process variable
+    // const amount = job.variables.get("amount");
+    // const item = job.variables.get("item");
 
-// subscribe to the topic: 'charge-card'
-client.subscribe('charge-card', async function({ task, taskService }) {
-  // Put your business logic here
+    // console.log(
+    //   `Charging credit card with an amount of ${amount}€ for the item '${item}'...`
+    // );
 
-  // Get a process variable
-  const amount = task.variables.get('amount');
-  const item = task.variables.get('item');
+    console.log("variables", job.variables);
 
-  console.log(`Charging credit card with an amount of ${amount}€ for the item '${item}'...`);
-
-  open('https://docs.camunda.org/get-started/quick-start/success');
-
-  // Complete the task
-  await taskService.complete(task);
+    // complete the task
+    //return job.complete({ Results, winningDate });
+    return job.complete();
+  },
 });

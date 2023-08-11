@@ -1,26 +1,13 @@
-DIR_HASH=$(shell git rev-parse --short HEAD)
-CI_REGISTRY=localhost:5001
-CI_PROJECT_NAME=service
-CI_REGISTRY_IMAGE=$(CI_REGISTRY)/$(CI_PROJECT_NAME)
-TAG=$(DIR_HASH)
-
 export KUBECONFIG=.kubeconfig
 export KIND_CLUSTER_NAME=camunda-platform-local
+export ZEEBE_ADDRESS=localhost:26500
 
 all:
 	@echo "all"
 
-create-registry:
-	./scripts/createregistry.sh
-
-destroy-registry:
-	./scripts/destroyregistry.sh
-
-create-cluster: create-registry
-	kind create cluster --config=./kind-config.yaml
-	./scripts/connectregistry.sh
+create-cluster:
+	kind create cluster
 	kubectl cluster-info --context kind-$(KIND_CLUSTER_NAME)
-	docker update --cpus=8 -m 16g --memory-swap -1 $(KIND_CLUSTER_NAME)-control-plane $(KIND_CLUSTER_NAME)-control-plane
 
 destroy-cluster: destroy-registry
 	kind delete cluster
@@ -61,33 +48,24 @@ connectors-forward:
 	echo "Visit http://127.0.0.1:8088 to use your application"
 	kubectl --namespace camunda port-forward svc/dev-connectors 8088:8080
 
-zeebe-port:
+zeebe-forward:
 	kubectl --namespace camunda port-forward svc/dev-zeebe-gateway 26500:26500
 
+forward-all:
+	$(MAKE) operate-forward &
+	$(MAKE) tasklist-forward &
+	$(MAKE) connectors-forward &
+	$(MAKE) zeebe-forward &
 
-#
-# dummy go application
-#
-run: build
-	deploy/service
+stop-forward:
+	pkill kubectl -9
 
-build:
-	GOOS=linux GOARCH=amd64 go build $(LDFLAGS) -o deploy/service ./cmd
+deploy-model:
+	zbctl --insecure deploy models/credit-card.bpmn
 
-package:
-	cd deploy && \
-	DOCKER_BUILDKIT=1 docker build  \
-		--tag $(CI_REGISTRY_IMAGE):$(TAG) \
-		--tag $(CI_REGISTRY_IMAGE):latest .
-	@echo created $(CI_REGISTRY_IMAGE):$(TAG)
+start-worker:
+	cd runner-js && npm install
+	node runner-js/worker.js
 
-push:
-	docker push $(CI_REGISTRY_IMAGE):$(TAG)
-
-deployment: build package push
-	@kubectl create namespace the-app 2>/dev/null || true
-	@kubectl -n the-app delete deploy server 2>/dev/null || true
-	kubectl -n the-app create deployment server --image=$(CI_REGISTRY_IMAGE):$(TAG)
-
-showlogs:
-	kubectl  -n the-app logs -f pods/$$(kubectl -n the-app get pod -l "app=server" -o jsonpath="{.items[0].metadata.name}")
+create-instance:
+	zbctl --insecure create instance Process_CreditCard --variables '{ "foo": "bar", "whatever": true, "something": -17 }'
