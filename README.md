@@ -10,16 +10,6 @@
 
 - <https://camunda.com/download/modeler/>
 
-
-## Call
-
-```bash
-curl -H "Content-Type: application/json" -X POST \
-    -d '{"variables": {"amount": {"value":555,"type":"integer"}, "item": {"value":"item-xyz"} } }' \
-    http://localhost:26500/process-definition/key/payment-retrieval/start
-
-```
-
 ## CLI Client
 
 - <https://docs.camunda.io/docs/apis-tools/cli-client/>
@@ -27,7 +17,7 @@ curl -H "Content-Type: application/json" -X POST \
 
 ```bash
 sudo npm i -g zbctl
-export ZEEBE_ADDRESS='http://localhost:26500'
+export ZEEBE_ADDRESS='localhost:26500'
 # things
 export ZEEBE_ADDRESS='[Zeebe API]'
 export ZEEBE_CLIENT_ID='[Client ID]'
@@ -36,7 +26,8 @@ export ZEEBE_AUTHORIZATION_SERVER_URL='[OAuth API]'
 ```
 
 ```bash
-export ZEEBE_ADDRESS='http://localhost:26500'
+export ZEEBE_ADDRESS='localhost:26500'
+# add --insecure
 zbctl status
 zbctl deploy resource foo.bpmn
 zbctl create worker test-worker --handler "echo {\"result\":\"Pong\"}"
