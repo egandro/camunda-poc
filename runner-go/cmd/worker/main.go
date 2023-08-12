@@ -4,6 +4,8 @@ import (
 	"context"
 	"log"
 	"os"
+	"sync"
+	"time"
 
 	"github.com/camunda-cloud/zeebe/clients/go/pkg/entities"
 	"github.com/camunda-cloud/zeebe/clients/go/pkg/worker"
@@ -12,7 +14,7 @@ import (
 
 const ZeebeAddr = "0.0.0.0:26500"
 
-var readyClose = make(chan struct{})
+// var readyClose = make(chan struct{})
 
 func main() {
 	gatewayAddr := os.Getenv("ZEEBE_ADDRESS")
@@ -40,13 +42,18 @@ func main() {
 	// jobWorker.Close()
 	// jobWorker.AwaitClose()
 
-	jobWorker := zbClient.NewJobWorker().JobType("charge-card").Handler(handleJob).Open()
-	<-readyClose
-	jobWorker.Close()
-	jobWorker.AwaitClose()
+	// https://github.com/camunda/zeebe/blob/e3acb70a8cfd3ee64ccb8a7f2f679b7534fbee4e/clients/go/pkg/zbc/oauthCredentialsProvider_test.go#L694
+	// maybe add some signal handler here to gracefully stop the workers
+
+	var wg sync.WaitGroup
+	wg.Add(1)
+	_ = zbClient.NewJobWorker().JobType("charge-card").Handler(handleJob).Open()
+	wg.Wait()
 }
 
 func handleJob(client worker.JobClient, job entities.Job) {
+	time.Sleep(10 * time.Second)
+
 	jobKey := job.GetKey()
 
 	variables, err := job.GetVariablesAsMap()
